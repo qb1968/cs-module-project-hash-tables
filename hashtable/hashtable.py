@@ -11,66 +11,63 @@ class HashTableEntry:
 # Hash table can't have fewer than this many slots
 MIN_CAPACITY = 8
 
-
 class HashTable:
     """
     A hash table that with `capacity` buckets
     that accepts string keys
-
     Implement this.
     """
 
-    def __init__(self, capacity = MIN_CAPACITY):
-        # Your code here
+    def __init__(self, capacity=MIN_CAPACITY):
         self.capacity = capacity
         self.storage = [None] * capacity
-
+        self.size = 0
 
     def get_num_slots(self):
         """
         Return the length of the list you're using to hold the hash
         table data. (Not the number of items stored in the hash table,
         but the number of slots in the main list.)
-
         One of the tests relies on this.
-
         Implement this.
         """
-        # Your code here
-        return self.capacity
-        
+        return len(self.storage)
 
 
     def get_load_factor(self):
         """
         Return the load factor for this hash table.
-
         Implement this.
         """
-        # Your code here
+        return self.size / self.capacity
 
 
     def fnv1(self, key):
         """
         FNV-1 Hash, 64-bit
-
         Implement this, and/or DJB2.
         """
+        FNV_Prime = 1099511628211
+        FNV_offset_basis = 14695981039346656037
 
-        # Your code here
+        hash = FNV_offset_basis
 
+        for char in key:
+            hash = hash * FNV_Prime
+            hash = hash ^ ord(char)
+        
+        return hash
 
     def djb2(self, key):
         """
         DJB2 hash, 32-bit
-
         Implement this, and/or FNV-1.
         """
-        # Your code here
-        hash = 55381
+        hash = 5381
+
         for c in key:
             hash = (hash * 33) + ord(c)
-        return hash    
+        return hash
 
 
     def hash_index(self, key):
@@ -78,64 +75,107 @@ class HashTable:
         Take an arbitrary key and return a valid integer index
         between within the storage capacity of the hash table.
         """
-        #return self.fnv1(key) % self.capacity
+        # return self.fnv1(key) % self.capacity
         return self.djb2(key) % self.capacity
 
     def put(self, key, value):
         """
         Store the value with the given key.
-
         Hash collisions should be handled with Linked List Chaining.
-
         Implement this.
         """
-        # Your code here
-        slot = self.hash_index(key)
-        self.storage[slot] = HashTableEntry(key, value)
+        
+        # With Collisions
+        self.size += 1
 
+        slot = self.hash_index(key)
+        cur = self.storage[slot]
+
+        if cur is None:
+            self.storage[slot] = HashTableEntry(key, value)
+            return
+        
+        slot = cur
+
+        while cur.next is not None:
+            if cur.key == key:
+                cur.value = value
+            cur = cur.next
+        if cur.key == key:
+            cur.value = value
+        else:
+            cur.next = HashTableEntry(key, value)
 
     def delete(self, key):
         """
         Remove the value stored with the given key.
-
         Print a warning if the key is not found.
-
         Implement this.
         """
-        # Your code here
-        if key is None:
-            print(f'(key) not found' )
+        
+        index = self.hash_index(key)
+        cur = self.storage[index]
+
+        if cur.key == key:
+            self.storage[index] = cur.next
+            return cur
+
+        prev = cur
+        cur = cur.next
+
+        while cur is not None and cur.key != key:
+            prev = cur
+            cur = cur.next
+        if cur is None:
+            print(f'{key} is not found')
+            return None
         else:
-            self.put(key, None)
+            self.size -= 1
+            prev.next = cur.next
 
 
 
     def get(self, key):
         """
         Retrieve the value stored with the given key.
-
         Returns None if the key is not found.
-
         Implement this.
         """
-        # Your code here
-        slot = self.hash_index(key)
-        hash_entry = self.storage[slot]
+        
+        index = self.hash_index(key)
 
-        if hash_entry is not None:
-            return hash_entry.value
+        cur = self.storage[index]
 
-        return None
+        while cur is not None and cur.key != key:
+            cur = cur.next
 
+        if cur is None:
+            return None
+        else:
+            return cur.value
 
     def resize(self, new_capacity):
         """
         Changes the capacity of the hash table and
         rehashes all key/value pairs.
-
         Implement this.
         """
-        # Your code here
+        
+        self.capacity = new_capacity
+        new_hash = [None] * self.capacity
+
+        
+        for i in range(len(self.storage)):
+            cur = self.storage[i]
+
+            while cur is not None:
+                new_slot = self.hash_index(cur.key)
+                new_hash[new_slot] = cur
+                cur = cur.next
+
+        self.storage = new_hash
+        
+            
 
 
 
