@@ -1,5 +1,23 @@
 def word_count(s):
     # Your code here
+    c = {}
+    
+    word = s.lower()
+    null = '" : ; , . - + = / \ | [ ] { } ( ) * ^ &'.split(' ')
+
+    for i in null:
+        word = word.replace(i, '')
+
+    word = word.split()
+
+    for x in word:
+        if x == '':
+            return{}
+        if x in c:
+            c[x] += 1
+        else:
+            c[x] = 1
+    return c                   
 
 
 
